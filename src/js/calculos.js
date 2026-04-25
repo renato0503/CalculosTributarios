@@ -156,6 +156,9 @@ function formatKey(key) {
 }
 
 function isMonetaryField(key) {
+    const nonMonetaryKeys = ['municipio', 'estado', 'tipo', 'cumulativo', 'cst', 'cfop', 'ncm'];
+    if (nonMonetaryKeys.some(k => key.toLowerCase().includes(k))) return false;
+    
     const monetaryKeys = [
         'total', 'tot', 'devido', 'liquido', 'bruto', 'base', 
         'credor', 'recolher', 'teste', 'receita', 'lucro', 
