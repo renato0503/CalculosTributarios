@@ -15,10 +15,6 @@ dist/
 # OS
 Thumbs.db
 
-# Firebase
-src/js/firebase-config.js
-firebase-config.js
-
 # Variáveis de ambiente (copie este arquivo para .env e preencha)
 .env
 .env.local
