@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cálculos Tributários - Login</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+</head>
+<body class="login-page">
+    <main class="login-container">
+        <header class="login-header">
+            <h1>Sistema Educacional - Cálculos Tributários</h1>
+            <p>Disciplina: Transição Tributária Brasil (2026-2033)</p>
+        </header>
+
+        <section class="login-form">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="cpfInput">CPF:</label>
+                    <input 
+                        type="text" 
+                        id="cpfInput" 
+                        name="cpf" 
+                        placeholder="000.000.000-00"
+                        autocomplete="off"
+                        required
+                    >
+                    <small id="cpfError" class="error-message"></small>
+                </div>
+
+                <button type="submit" id="loginBtn" class="btn btn-primary">
+                    Entrar
+                </button>
+            </form>
+
+            <div id="loadingSpinner" class="spinner hidden">
+                <div class="spinner-border"></div>
+                <p>Carregando...</p>
+            </div>
+
+            <div id="loginError" class="alert alert-error hidden"></div>
+        </section>
+
+        <footer class="login-footer">
+            <p>Ambiente de testes | EC 132/2023 - Reforma Tributária Brasil</p>
+        </footer>
+    </main>
+
+    <script type="module" src="src/js/firebase-config.js"></script>
+    <script type="module" src="src/js/auth.js"></script>
+</body>
+</html>

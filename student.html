@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulos de Cálculo - Cálculos Tributários</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+</head>
+<body class="student-page">
+    <header class="student-header">
+        <div class="header-main">
+            <h1>Cálculos Tributários</h1>
+            <div class="active-scenario-selector">
+                <label for="globalScenarioSelect">Cenário Ativo:</label>
+                <select id="globalScenarioSelect">
+                    <option value="">Selecione um cenário...</option>
+                </select>
+            </div>
+        </div>
+        <div class="user-info">
+            <span id="userName"></span>
+            <span id="userCPF"></span>
+            <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+        </div>
+    </header>
+
+    <nav class="module-nav">
+        <button class="module-btn" data-module="scenarios">🛒 Meus Cenários</button>
+        <button class="module-btn active" data-module="iss">ISS</button>
+        <button class="module-btn" data-module="icms">ICMS</button>
+        <button class="module-btn" data-module="ipi">IPI</button>
+        <button class="module-btn" data-module="pis-cofins">PIS/Cofins</button>
+        <button class="module-btn" data-module="irpj">IRPJ</button>
+        <button class="module-btn" data-module="csll">CSLL</button>
+        <button class="module-btn" data-module="calculos">📊 Cálculos</button>
+        <button class="module-btn" data-module="dashboard">📈 Dashboard</button>
+    </nav>
+
+    <main class="modules-container">
+        <!-- Módulo de Cenários -->
+        <section id="scenarios" class="module">
+            <h2>Gerenciamento de Cenários</h2>
+            <div class="card scenario-creation">
+                <h3>Criar Novo Cenário</h3>
+                <p>Crie cenários diferentes para simular diversos contextos tributários.</p>
+                <div class="form-group inline-form">
+                    <input type="text" id="newScenarioName" placeholder="Ex: Simulação Lucro Real - 2026" class="form-control">
+                    <button id="createNewScenarioBtn" class="btn btn-primary">Criar Cenário</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Seus Cenários</h3>
+                <div id="scenariosFullList" class="scenarios-grid">
+                    <!-- Dinâmico -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Módulo ISS -->
+        <section id="iss" class="module active">
+            <h2>Imposto sobre Serviços (ISS)</h2>
+            <form id="issForm" class="module-form">
+                <div class="form-group">
+                    <label for="issValor">Valor do Serviço (R$):</label>
+                    <input type="number" id="issValor" name="valor" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="issMunicipio">Município:</label>
+                    <input type="text" id="issMunicipio" name="municipio" placeholder="Digite o município" required>
+                </div>
+                <div class="form-group">
+                    <label for="issAliquota">Alíquota ISS (%):</label>
+                    <input type="number" id="issAliquota" name="aliquota" placeholder="2.5" min="0" max="5" step="0.1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular</button>
+            </form>
+            <div id="issResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>ISS Devido:</label>
+                    <span id="issDevido">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>CBS (Teste 0,9%):</label>
+                    <span id="issCBS">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>IBS (Teste 0,1%):</label>
+                    <span id="issIBS">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Total Retenção (1%):</label>
+                    <span id="issTotalRetencao">R$ 0.00</span>
+                </div>
+                <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
+                <button type="button" id="btn-salvar-iss" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- Módulo ICMS -->
+        <section id="icms" class="module">
+            <h2>Imposto sobre Circulação de Mercadorias e Serviços (ICMS)</h2>
+            <form id="icmsForm" class="module-form">
+                <div class="form-group">
+                    <label for="icmsBaseCalculo">Base de Cálculo (R$):</label>
+                    <input type="number" id="icmsBaseCalculo" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="icmsAliquota">Alíquota (%):</label>
+                    <input type="number" id="icmsAliquota" placeholder="18" min="0" max="35" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="icmsTipoOperacao">Tipo de Operação:</label>
+                    <select id="icmsTipoOperacao">
+                        <option value="substitution">Substituição Tributária</option>
+                        <option value="normal">Operação Normal</option>
+                        <option value="importacao">Importação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="icmsEstadoOrigem">Estado de Origem:</label>
+                    <select id="icmsEstadoOrigem">
+                        <option value="AC">Acre</option>
+                        <option value="AL">Alagoas</option>
+                        <option value="AP">Amapá</option>
+                        <option value="AM">Amazonas</option>
+                        <option value="BA">Bahia</option>
+                        <option value="CE">Ceará</option>
+                        <option value="DF">Distrito Federal</option>
+                        <option value="ES">Espírito Santo</option>
+                        <option value="GO">Goiás</option>
+                        <option value="MA">Maranhão</option>
+                        <option value="MT">Mato Grosso</option>
+                        <option value="MS">Mato Grosso do Sul</option>
+                        <option value="MG">Minas Gerais</option>
+                        <option value="PA">Pará</option>
+                        <option value="PB">Paraíba</option>
+                        <option value="PR">Paraná</option>
+                        <option value="PE">Pernambuco</option>
+                        <option value="PI">Piauí</option>
+                        <option value="RJ">Rio de Janeiro</option>
+                        <option value="RN">Rio Grande do Norte</option>
+                        <option value="RS">Rio Grande do Sul</option>
+                        <option value="RO">Rondônia</option>
+                        <option value="RR">Roraima</option>
+                        <option value="SC">Santa Catarina</option>
+                        <option value="SP">São Paulo</option>
+                        <option value="SE">Sergipe</option>
+                        <option value="TO">Tocantins</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="icmsEstadoDestino">Estado de Destino:</label>
+                    <select id="icmsEstadoDestino">
+                        <option value="AC">Acre</option>
+                        <option value="AL">Alagoas</option>
+                        <option value="AP">Amapá</option>
+                        <option value="AM">Amazonas</option>
+                        <option value="BA">Bahia</option>
+                        <option value="CE">Ceará</option>
+                        <option value="DF">Distrito Federal</option>
+                        <option value="ES">Espírito Santo</option>
+                        <option value="GO">Goiás</option>
+                        <option value="MA">Maranhão</option>
+                        <option value="MT">Mato Grosso</option>
+                        <option value="MS">Mato Grosso do Sul</option>
+                        <option value="MG">Minas Gerais</option>
+                        <option value="PA">Pará</option>
+                        <option value="PB">Paraíba</option>
+                        <option value="PR">Paraná</option>
+                        <option value="PE">Pernambuco</option>
+                        <option value="PI">Piauí</option>
+                        <option value="RJ">Rio de Janeiro</option>
+                        <option value="RN">Rio Grande do Norte</option>
+                        <option value="RS">Rio Grande do Sul</option>
+                        <option value="RO">Rondônia</option>
+                        <option value="RR">Roraima</option>
+                        <option value="SC">Santa Catarina</option>
+                        <option value="SP">São Paulo</option>
+                        <option value="SE">Sergipe</option>
+                        <option value="TO">Tocantins</option>
+                    </select>
+                </div>
+                <!-- 🔹 CAMPOS ICMS-ST -->
+                <div class="form-group-grid">
+                    <div class="form-group">
+                        <label for="icmsFrete">Frete (R$):</label>
+                        <input type="number" id="icmsFrete" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="icmsIPI">IPI (R$):</label>
+                        <input type="number" id="icmsIPI" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="icmsOutrasDespesas">Outras Despesas (R$):</label>
+                        <input type="number" id="icmsOutrasDespesas" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                </div>
+                <div class="form-group" id="icms-mva-group" style="display:none;">
+                    <label for="icmsMVA">Margem de Valor Agregado - MVA (%):</label>
+                    <input type="number" id="icmsMVA" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="icmsCEST">CEST (Opcional):</label>
+                    <input type="text" id="icmsCEST" placeholder="00.000.00">
+                </div>
+                <!-- 🔹 CRÉDITOS ICMS: Novo campo de créditos -->
+                <div class="form-group" id="icms-creditos-group" style="display:none;">
+                    <label for="icms-creditos">
+                        Créditos de ICMS (entradas tributadas)
+                        <span title="Soma dos créditos sobre aquisições de mercadorias/serviços com ICMS destacado" style="cursor:help">ℹ️</span>
+                    </label>
+                    <input type="number" id="icms-creditos" class="form-control" placeholder="0.00" step="0.01" min="0" value="0">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Calcular</button>
+            </form>
+            <div id="icmsResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>Débito Bruto ICMS:</label>
+                    <span id="icmsDebitoBruto">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>(-) Créditos:</label>
+                    <span id="icmsCreditosDisplay">R$ 0.00</span>
+                </div>
+                <div class="resultado-item destaque">
+                    <label>ICMS Líquido a Pagar:</label>
+                    <span id="icmsLiquido">R$ 0.00</span>
+                </div>
+                <div id="icms-saldo-credor-badge" class="badge badge-info" style="display:none; margin-top: 10px;"></div>
+                <hr>
+                <div class="resultado-item">
+                    <label>ICMS Próprio:</label>
+                    <span id="icmsDevido">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Base de Cálculo ST:</label>
+                    <span id="icmsBaseST">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>ICMS-ST Total:</label>
+                    <span id="icmsSTTotal">R$ 0.00</span>
+                </div>
+                <div class="resultado-item destaque-secundario">
+                    <label>ICMS-ST a Recolher:</label>
+                    <span id="icmsSTRecolher">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>DIFAL:</label>
+                    <span id="icmsDIFAL">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>FCP:</label>
+                    <span id="icmsFCP">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Total ICMS (Sem Créditos):</label>
+                    <span id="icmsTotal">R$ 0.00</span>
+                </div>
+                <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
+                <button type="button" id="btn-salvar-icms" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- Módulo IPI -->
+        <section id="ipi" class="module">
+            <h2>Imposto sobre Produtos Industrializados (IPI)</h2>
+            <form id="ipiForm" class="module-form">
+                <div class="form-group">
+                    <label for="ipiBaseCalculo">Base de Cálculo (R$):</label>
+                    <input type="number" id="ipiBaseCalculo" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="ipiAliquota">Alíquota (%):</label>
+                    <input type="number" id="ipiAliquota" placeholder="5" min="0" max="30" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="ipiTipoIncidência">Tipo de Incidência:</label>
+                    <select id="ipiTipoIncidencia">
+                        <option value="ad_valorem">Ad Valorem</option>
+                        <option value="especifica">Específica</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ipiFrete">Frete (R$):</label>
+                    <input type="number" id="ipiFrete" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="ipiSeguro">Seguro (R$):</label>
+                    <input type="number" id="ipiSeguro" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="ipiOutrasDespesas">Outras Despesas (R$):</label>
+                    <input type="number" id="ipiOutrasDespesas" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular</button>
+            </form>
+            <div id="ipiResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>Base IPI:</label>
+                    <span id="ipiBaseTotal">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>IPI Devido:</label>
+                    <span id="ipiDevido">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Preço de Venda:</label>
+                    <span id="ipiPrecoVenda">R$ 0.00</span>
+                </div>
+                <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
+                <button type="button" id="btn-salvar-ipi" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- Módulo PIS/Cofins -->
+        <section id="pis-cofins" class="module">
+            <h2>PIS e COFINS</h2>
+            <form id="pisCofinsForm" class="module-form">
+                <div class="form-group">
+                    <label for="pisBaseCalculo">Faturamento/Receita Bruta (R$):</label>
+                    <input type="number" id="pisBaseCalculo" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="pisAcrescimos">
+                        (+) Acréscimos à Base (R$):
+                        <span title="Frete, Seguro e outras despesas cobradas do cliente" style="cursor:help">ℹ️</span>
+                    </label>
+                    <input type="number" id="pisAcrescimos" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="pisExclusoes">
+                        (-) Exclusões da Base (R$):
+                        <span title="IPI destacado, Devoluções de vendas e Descontos Incondicionais" style="cursor:help">ℹ️</span>
+                    </label>
+                    <input type="number" id="pisExclusoes" placeholder="0.00" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="pisAliquota">Alíquota PIS (%):</label>
+                    <input type="number" id="pisAliquota" placeholder="0.65" min="0" max="3" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="cofinsAliquota">Alíquota COFINS (%):</label>
+                    <input type="number" id="cofinsAliquota" placeholder="5.8" min="0" max="15" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="pisTipoTributacao">Tipo de Tributação:</label>
+                    <select id="pisTipoTributacao">
+                        <option value="nao_cumulativo">Não Cumulativo</option>
+                        <option value="cumulativo">Cumulativo</option>
+                        <option value="retencao">Retenção na Fonte</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pis-cofins-creditos-group" style="display:none">
+                    <label for="pis-cofins-creditos">
+                        Créditos de PIS/COFINS 
+                        <span title="Soma dos créditos sobre insumos, energia, aluguel, etc. vinculados à atividade" style="cursor:help">ℹ️</span>
+                    </label>
+                    <input type="number" id="pis-cofins-creditos" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="pisCumulativo">
+                    <label for="pisCumulativo">Regime Cumulativo (65% da alíquota)</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Calcular</button>
+            </form>
+            <div id="pisCofinsResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>Base de Cálculo Real:</label>
+                    <span id="pisCofinsBaseReal">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Débito Bruto (PIS + COFINS):</label>
+                    <span id="pisCofinsDebitoBruto">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>(-) Créditos:</label>
+                    <span id="pisCofinsCreditosDisplay">R$ 0.00</span>
+                </div>
+                <div class="resultado-item destaque">
+                    <label>Total Líquido a Pagar:</label>
+                    <span id="pisCofinsTotal">R$ 0.00</span>
+                </div>
+                <div id="pisCofinsMensagemContainer"></div>
+                <hr>
+                <div class="resultado-item">
+                    <label>PIS (Apenas Débito):</label>
+                    <span id="pisDevido">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>COFINS (Apenas Débito):</label>
+                    <span id="cofinsDevido">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>CBS (Teste 0,9%):</label>
+                    <span id="pisCbs">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>IBS (Teste 0,1%):</label>
+                    <span id="pisIbs">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Total Teste (1%):</label>
+                    <span id="pisTotalTeste">R$ 0.00</span>
+                </div>
+                <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
+                <button type="button" id="btn-salvar-pis-cofins" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- Módulo IRPJ -->
+        <section id="irpj" class="module">
+            <h2>Imposto de Renda Pessoa Jurídica (IRPJ)</h2>
+            <form id="irpjForm" class="module-form">
+                <!-- DRE Simplificada -->
+                <div class="form-group">
+                    <label for="irpj-receita">Receita Bruta/Faturamento (R$):</label>
+                    <input type="number" id="irpj-receita" placeholder="0.00" step="0.01" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="irpj-custos">Custos Tributáveis (R$):</label>
+                        <input type="number" id="irpj-custos" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="irpj-despesas">Despesas Operacionais (R$):</label>
+                        <input type="number" id="irpj-despesas" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="irpj-financ">Resultado Financeiro (+/- R$):</label>
+                    <input type="number" id="irpj-financ" placeholder="0.00" step="0.01" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="irpj-regime">Regime de Apuração:</label>
+                    <select id="irpj-regime">
+                        <option value="real">Lucro Real</option>
+                        <option value="presumido">Lucro Presumido</option>
+                    </select>
+                </div>
+                
+                <!-- Campos específicos Lucro Real -->
+                <div id="irpj-real-fields" class="sub-fields">
+                    <div class="form-group">
+                        <label for="irpj-adicoes">Adições (Despesas Indedutíveis, Multas):</label>
+                        <input type="number" id="irpj-adicoes" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="irpj-exclusoes">Exclusões (Receitas Isentas, JCP):</label>
+                        <input type="number" id="irpj-exclusoes" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="irpj-compensacoes">Compensação de Prejuízos (Limite 30%):</label>
+                        <input type="number" id="irpj-compensacoes" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                </div>
+                
+                <!-- Campos específicos Lucro Presumido -->
+                <div id="irpj-presumido-fields" class="sub-fields" style="display:none;">
+                    <div class="form-group">
+                        <label for="irpj-cnae">Atividade/CNAE (Coeficiente):</label>
+                        <select id="irpj-cnae">
+                            <option value="32">Serviços em Geral (32%)</option>
+                            <option value="8">Comércio/Indústria (8%)</option>
+                            <option value="16">Transporte de Passageiros (16%)</option>
+                            <option value="1.6">Intermediação de Negócios (1,6%)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" id="btn-calcular-irpj" class="btn btn-primary">Calcular IRPJ</button>
+            </form>
+            
+            <div id="irpjResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>Lucro Contábil/Presumido:</label>
+                    <span id="irpj-lucro">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Base de Cálculo:</label>
+                    <span id="irpj-base">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>IRPJ Básico (15%):</label>
+                    <span id="irpj-basico">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Adicional (10% sobre excedente):</label>
+                    <span id="irpj-adicional">R$ 0.00</span>
+                </div>
+                <div class="resultado-item destaque">
+                    <label>Total IRPJ:</label>
+                    <span id="irpj-total">R$ 0.00</span>
+                </div>
+                <button type="button" id="btn-salvar-irpj" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- Módulo CSLL -->
+        <section id="csll" class="module">
+            <h2>Contribuição Social sobre o Lucro Líquido (CSLL)</h2>
+            <form id="csllForm" class="module-form">
+                <div class="alert alert-info" style="margin-bottom: 15px; font-size: 0.9em; padding: 10px; background: rgba(54, 162, 235, 0.1); border-radius: 8px; border-left: 4px solid #36a2eb;">
+                    💡 Dica: CSLL usa base similar ao IRPJ. Preencha os dados do IRPJ primeiro.
+                </div>
+                
+                <div class="form-group checkbox-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                    <input type="checkbox" id="csll-usar-irpj" checked style="width: auto;"> 
+                    <label for="csll-usar-irpj" style="margin-bottom: 0;">Usar mesma base de cálculo do IRPJ</label>
+                </div>
+                
+                <div id="csll-manual-fields" style="display:none;">
+                    <div class="form-group">
+                        <label for="csll-base">Base de Cálculo CSLL (R$):</label>
+                        <input type="number" id="csll-base" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="csll-regime">Regime de Apuração:</label>
+                    <select id="csll-regime">
+                        <option value="real">Lucro Real</option>
+                        <option value="presumido">Lucro Presumido</option>
+                    </select>
+                </div>
+                
+                <!-- Coeficiente para Presumido -->
+                <div id="csll-presumido-fields" class="sub-fields" style="display:none;">
+                    <div class="form-group">
+                        <label for="csll-coeficiente">Coeficiente CSLL:</label>
+                        <select id="csll-coeficiente">
+                            <option value="32">Serviços (32%)</option>
+                            <option value="12">Comércio/Indústria (12%)</option>
+                            <option value="16">Transporte (16%)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" id="btn-calcular-csll" class="btn btn-primary">Calcular CSLL</button>
+            </form>
+            
+            <div id="csllResultados" class="resultados hidden">
+                <h3>Resultados</h3>
+                <div class="resultado-item">
+                    <label>Base de Cálculo:</label>
+                    <span id="csll-base-calc">R$ 0.00</span>
+                </div>
+                <div class="resultado-item">
+                    <label>Alíquota:</label>
+                    <span id="csll-aliquota">9%</span>
+                </div>
+                <div class="resultado-item destaque">
+                    <label>Total CSLL:</label>
+                    <span id="csll-total">R$ 0.00</span>
+                </div>
+                <button type="button" id="btn-salvar-csll" class="btn btn-success btn-salvar-modulo" style="display:none; width: 100%; margin-top: 15px;">💾 Salvar no Cenário</button>
+            </div>
+        </section>
+
+        <!-- 🔹 NOVA TELA: Cálculos Detalhados -->
+        <section id="calculos" class="module">
+            <div class="calculos-header">
+                <h2>Relatório de Cálculos</h2>
+                <p class="calculos-subtitle">Auditoria detalhada por módulo do cenário ativo</p>
+            </div>
+            
+            <div id="calculos-filtro" class="calculos-filtro">
+                <label for="calculos-scenario-select">Visualizar cenário:</label>
+                <select id="calculos-scenario-select">
+                    <option value="">Selecione um cenário...</option>
+                </select>
+                <button id="btn-exportar-calculos" class="btn btn-secondary" title="Exportar para PDF">
+                    📄 Exportar
+                </button>
+            </div>
+
+            <div id="calculos-content" class="calculos-content">
+                <p class="empty-message">Selecione um cenário para visualizar os cálculos detalhados.</p>
+            </div>
+
+            <div id="calculos-resumo" class="calculos-resumo" style="display: none;">
+                <h3>Resumo do Cenário</h3>
+                <div class="resumo-grid">
+                    <div class="resumo-item">
+                        <label>Total ISS:</label>
+                        <span id="resumo-iss">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <label>Total ICMS:</label>
+                        <span id="resumo-icms">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <label>Total IPI:</label>
+                        <span id="resumo-ipi">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <label>Total PIS/COFINS:</label>
+                        <span id="resumo-pis">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <label>Total IRPJ:</label>
+                        <span id="resumo-irpj">R$ 0,00</span>
+                    </div>
+                    <div class="resumo-item">
+                        <label>Total CSLL:</label>
+                        <span id="resumo-csll">R$ 0,00</span>
+                    </div>
+                </div>
+                <div class="resumo-total">
+                    <label>Carga Tributária Total:</label>
+                    <span id="resumo-total">R$ 0,00</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard -->
+        <section id="dashboard" class="module">
+            <h2>Dashboard e Cenários</h2>
+            
+            <div id="dashboardContent" class="dashboard-container">
+                <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                    <div class="dashboard-card main-card" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <h3 style="margin-top: 0;">Carga Tributária Total</h3>
+                        <div class="value" id="total-tributos" style="font-size: 2em; font-weight: bold; color: var(--accent-color);">R$ 0,00</div>
+                        <div class="sub-value" style="opacity: 0.7; margin-top: 10px;">Carga sobre faturamento: <span id="carga-percentual">0.00%</span></div>
+                    </div>
+                    
+                    <div class="dashboard-card" style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <h3 style="margin-top: 0;">IVA Dual (CBS/IBS Teste)</h3>
+                        <div class="value secondary" id="total-cbs-teste" style="font-size: 1.8em; font-weight: bold; color: #36a2eb;">R$ 0,00</div>
+                        <div class="small-info" style="opacity: 0.7; margin-top: 10px;">Estimativa baseada em 1% sobre o consumo</div>
+                    </div>
+                </div>
+
+                <div class="chart-section card" style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px;">
+                    <h3>Distribuição por Tributo</h3>
+                    <div style="max-width: 500px; margin: 0 auto;">
+                        <canvas id="grafico-distribuicao"></canvas>
+                    </div>
+                </div>
+
+                <!-- 🔹 SPLIT TEST SECTION -->
+                <div class="split-test-section card" style="margin-top: 20px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div class="split-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">🔍 Split Test: Reforma Tributária</h3>
+                        <span id="split-alert" class="badge badge-info">Aguardando dados...</span>
+                    </div>
+                    <div class="split-grid" style="display: flex; justify-content: space-between; align-items: center; gap: 15px; text-align: center;">
+                        <div class="split-item" style="flex: 1;">
+                            <label style="display: block; opacity: 0.7; margin-bottom: 5px;">Cenário Vigente (2026)</label>
+                            <div class="split-value" id="split-vigente" style="font-size: 1.5em; font-weight: bold;">R$ 0,00</div>
+                            <small style="opacity: 0.5;">Soma de todos os tributos atuais</small>
+                        </div>
+                        <div class="split-item divider" style="font-size: 1.5em; opacity: 0.3;">
+                            <i class="fas fa-arrows-alt-h"></i>
+                        </div>
+                        <div class="split-item" style="flex: 1;">
+                            <label style="display: block; opacity: 0.7; margin-bottom: 5px;">Pós-Reforma (Est. 2027+)</label>
+                            <div class="split-value" id="split-pos-reforma" style="font-size: 1.5em; font-weight: bold; color: var(--accent-color);">R$ 0,00</div>
+                            <small style="opacity: 0.5;">CBS/IBS (26,5%) + IRPJ/CSLL</small>
+                        </div>
+                    </div>
+                    <div class="split-footer" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                        <div class="impact-label" style="font-weight: bold;">Diferença de Impacto: <span id="split-diferenca" style="color: #ff6384;">R$ 0,00 (0%)</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <!-- Lista de Cenários Salvos -->
+            <div class="saved-scenarios-section card">
+                <h3>Meus Cenários Salvos</h3>
+                <div id="scenariosList" class="scenarios-grid">
+                    <p class="empty-message">Nenhum cenário salvo ainda.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="src/js/firebase-config.js"></script>
+    <script type="module" src="src/js/student.js"></script>
+    <script type="module" src="src/js/iss.js"></script>
+    <script type="module" src="src/js/icms.js"></script>
+    <script type="module" src="src/js/ipi.js"></script>
+    <script type="module" src="src/js/pis-cofins.js"></script>
+    <script type="module" src="src/js/irpj.js"></script>
+    <script type="module" src="src/js/csll.js"></script>
+    <script type="module" src="src/js/calculos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" crossorigin="anonymous"></script>
+    <script type="module" src="src/js/dashboard.js"></script>
+    <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;"></div>
+</body>
+</html>

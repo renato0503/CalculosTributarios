@@ -1,0 +1,21 @@
+node_modules/
+.DS_Store
+.firebase/
+firebase-debug.log
+*.log
+.cache
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+
+# Variáveis de ambiente (copie este arquivo para .env e preencha)
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - Cálculos Tributários</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/css/layout.css">
+</head>
+<body class="admin-page">
+    <header class="admin-header">
+        <h1>Painel Administrativo - Prof. Renato Rosa</h1>
+        <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+    </header>
+
+    <main class="admin-container">
+        <section class="students-list">
+            <h2>Alunos Cadastrados</h2>
+            <div id="studentsList" class="grid-list">
+                <!-- Dinamicamente preenchido -->
+            </div>
+        </section>
+
+        <section id="studentDetails" class="student-details hidden">
+            <header class="student-header">
+                <button id="backBtn" class="btn btn-secondary">← Voltar</button>
+                <h3 id="studentName"></h3>
+            </header>
+
+            <div class="student-data">
+                <h4>Status dos Módulos</h4>
+                <table id="studentDataTable">
+                    <thead>
+                        <tr>
+                            <th>Módulo</th>
+                            <th>Inputs</th>
+                            <th>Outputs</th>
+                            <th>Última Atualização</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentDataBody">
+                        <!-- Dinamicamente preenchido -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="student-scenarios">
+                <h4>Cenários Salvos</h4>
+                <div id="studentScenariosList" class="scenarios-grid-mini">
+                    <p>Nenhum cenário salvo.</p>
+                </div>
+            </div>
+
+            <div class="admin-actions">
+                <button id="editBtn" class="btn btn-primary">Editar Dados</button>
+                <button id="deleteBtn" class="btn btn-danger">Deletar Aluno</button>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="src/js/firebase-config.js"></script>
+    <script type="module" src="src/js/admin.js"></script>
+</body>
+</html>
