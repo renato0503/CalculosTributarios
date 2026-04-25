@@ -268,14 +268,16 @@ function renderStudentDetails(studentData, cpf, scenarios) {
     const studentName = document.getElementById('studentName');
     const studentHeader = document.getElementById('studentHeader');
     
-    studentName.textContent = studentData.nome || 'Aluno';
+    if (studentName) {
+        studentName.textContent = studentData.nome || 'Aluno';
+    }
     
     const statusInfo = getStudentStatus(studentData.ultimoAcesso || studentData.dataAcesso);
     
     studentHeader.innerHTML = `
         <button id="backBtn" class="btn btn-secondary" onclick="showStudentsList()">← Voltar</button>
         <div class="student-header-info">
-            <h2 id="studentName">${studentData.nome || 'Aluno'}</h2>
+            <h2>${studentData.nome || 'Aluno'}</h2>
             <div class="student-badges">
                 <span class="badge" style="background: ${statusInfo.color}20; color: ${statusInfo.color}">${statusInfo.label}</span>
                 <span class="badge">📊 ${scenarios.length} cenários</span>
@@ -623,5 +625,3 @@ window.exportAllStudents = function() {
 };
 
 document.addEventListener('DOMContentLoaded', initializeAdminPage);
-
-export { loadAllStudents, loadStudentDetails };

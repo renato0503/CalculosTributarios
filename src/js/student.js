@@ -63,7 +63,7 @@ function setupModuleNavigation() {
             if (targetSection) {
                 targetSection.classList.add('active');
                 // Forçar recarregamento de dados do módulo específico ao trocar de aba
-                if (moduleName !== 'scenarios' && moduleName !== 'dashboard' && moduleName !== 'calculos') {
+                if (moduleName !== 'scenarios' && moduleName !== 'dashboard') {
                     window.dispatchEvent(new CustomEvent('moduleSwitched', { detail: { module: moduleName } }));
                 }
             }
@@ -318,4 +318,4 @@ document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', initializeStudentPage);
 
-export { loadModuleData, saveModuleData, handleModuleSave, showToast, loadUserData };
+document.addEventListener('DOMContentLoaded', initializeStudentPage);

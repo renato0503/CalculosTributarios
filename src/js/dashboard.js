@@ -169,14 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarDashboard(true);
         }
     });
-    
-    // Atualiza periodicamente a cada 3 segundos como fallback
-    setInterval(() => {
-        const cenarioAtivo = sessionStorage.getItem('cenarioAtivo');
-        if (cenarioAtivo) {
-            atualizarDashboard(false);
-        }
-    }, 3000);
 });
 
 // Alias for compatibility

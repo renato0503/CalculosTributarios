@@ -6,6 +6,7 @@
     <title>Módulos de Cálculo - Cálculos Tributários</title>
     <link rel="stylesheet" href="src/css/style.css">
     <link rel="stylesheet" href="src/css/layout.css">
+    <link rel="stylesheet" href="src/css/calculos.css">
 </head>
 <body class="student-page">
     <header class="student-header">
@@ -683,6 +684,76 @@
                 <h3>Meus Cenários Salvos</h3>
                 <div id="scenariosList" class="scenarios-grid">
                     <p class="empty-message">Nenhum cenário salvo ainda.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🔹 ABA CÁLCULOS -->
+        <section id="calculos" class="module">
+            <div class="calculos-page">
+                <div class="calculos-header">
+                    <h2>📋 Relatório Detalhado de Cálculos</h2>
+                    <p class="subtitle">Auditoria completa por módulo do cenário ativo</p>
+                </div>
+
+                <div class="calculos-actions">
+                    <div class="filter-group">
+                        <label for="calculosScenarioSelect">Visualizar cenário:</label>
+                        <select id="calculosScenarioSelect">
+                            <option value="">Selecione um cenário...</option>
+                        </select>
+                    </div>
+                    <button id="btnExportarCalculos" class="btn btn-primary" onclick="window.print()">
+                        📄 Exportar PDF
+                    </button>
+                </div>
+
+                <div id="loadingCalculos" class="loading-state" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Carregando cálculos...</p>
+                </div>
+
+                <div id="calculosContent" class="calculos-content">
+                </div>
+
+                <div id="calculosResumo" class="calculos-resumo" style="display: none;">
+                    <h3>📊 Resumo da Carga Tributária</h3>
+                    <div class="resumo-grid">
+                        <div class="resumo-item">
+                            <span class="resumo-label">ISS</span>
+                            <span class="resumo-value" id="resumoISS">R$ 0,00</span>
+                        </div>
+                        <div class="resumo-item">
+                            <span class="resumo-label">ICMS</span>
+                            <span class="resumo-value" id="resumoICMS">R$ 0,00</span>
+                        </div>
+                        <div class="resumo-item">
+                            <span class="resumo-label">IPI</span>
+                            <span class="resumo-value" id="resumoIPI">R$ 0,00</span>
+                        </div>
+                        <div class="resumo-item">
+                            <span class="resumo-label">PIS/COFINS</span>
+                            <span class="resumo-value" id="resumoPIS">R$ 0,00</span>
+                        </div>
+                        <div class="resumo-item">
+                            <span class="resumo-label">IRPJ</span>
+                            <span class="resumo-value" id="resumoIRPJ">R$ 0,00</span>
+                        </div>
+                        <div class="resumo-item">
+                            <span class="resumo-label">CSLL</span>
+                            <span class="resumo-value" id="resumoCSLL">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <div class="resumo-total">
+                        <span class="total-label">Carga Tributária Total:</span>
+                        <span class="total-value" id="resumoTotal">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <div id="emptyStateCalculos" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📝</div>
+                    <h3>Nenhum cálculo realizado</h3>
+                    <p>Volte aos módulos de cálculo, insira os dados e clique em "Salvar no Cenário".</p>
                 </div>
             </div>
         </section>
