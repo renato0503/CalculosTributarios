@@ -318,4 +318,4 @@ document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', initializeStudentPage);
 
-document.addEventListener('DOMContentLoaded', initializeStudentPage);
+export { loadModuleData, saveModuleData, handleModuleSave, showToast, loadUserData };

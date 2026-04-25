@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Cálculos - Cálculos Tributários</title>
+    <link rel="stylesheet" href="src/css/style.css">
+    <link rel="stylesheet" href="src/css/calculos.css">
+</head>
+<body class="calculos-page">
+    <!-- Header Padrão do App -->
+    <header class="student-header">
+        <div class="header-main">
+            <h1>Cálculos Tributários</h1>
+            <div class="active-scenario-selector">
+                <label for="globalScenarioSelect">Cenário Ativo:</label>
+                <select id="globalScenarioSelect">
+                    <option value="">Selecione um cenário...</option>
+                </select>
+            </div>
+        </div>
+        <div class="user-info">
+            <span id="userName"></span>
+            <span id="userCPF"></span>
+            <button onclick="window.location.href='student.html'" class="btn btn-secondary">← Voltar</button>
+            <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+        </div>
+    </header>
+
+    <!-- Navegação -->
+    <nav class="module-nav">
+        <button class="module-btn" onclick="window.location.href='student.html#scenarios'">🛒 Meus Cenários</button>
+        <button class="module-btn" onclick="window.location.href='student.html#iss'">ISS</button>
+        <button class="module-btn" onclick="window.location.href='student.html#icms'">ICMS</button>
+        <button class="module-btn" onclick="window.location.href='student.html#ipi'">IPI</button>
+        <button class="module-btn" onclick="window.location.href='student.html#pis-cofins'">PIS/Cofins</button>
+        <button class="module-btn" onclick="window.location.href='student.html#irpj'">IRPJ</button>
+        <button class="module-btn" onclick="window.location.href='student.html#csll'">CSLL</button>
+        <button class="module-btn active" onclick="window.location.href='calculos.html'">📊 Cálculos</button>
+        <button class="module-btn" onclick="window.location.href='student.html#dashboard'">📈 Dashboard</button>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="calculos-container">
+        <div class="calculos-header">
+            <h2>📋 Relatório Detalhado de Cálculos</h2>
+            <p class="subtitle">Auditoria completa por módulo do cenário ativo</p>
+        </div>
+
+        <!-- Filtros e Ações -->
+        <div class="calculos-actions">
+            <div class="filter-group">
+                <label for="calculosScenarioSelect">Visualizar cenário:</label>
+                <select id="calculosScenarioSelect">
+                    <option value="">Carregando cenários...</option>
+                </select>
+            </div>
+            <button id="btnExportar" class="btn btn-primary" onclick="exportarPDF()">
+                📄 Exportar PDF
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingCalculos" class="loading-state">
+            <div class="spinner"></div>
+            <p>Carregando cálculos...</p>
+        </div>
+
+        <!-- Conteúdo dos Cálculos -->
+        <div id="calculosContent" class="calculos-content" style="display: none;">
+            <!-- Cards serão inseridos via JavaScript -->
+        </div>
+
+        <!-- Resumo Consolidado -->
+        <div id="calculosResumo" class="calculos-resumo" style="display: none;">
+            <h3>📊 Resumo da Carga Tributária</h3>
+            <div class="resumo-grid">
+                <div class="resumo-item">
+                    <span class="resumo-label">ISS</span>
+                    <span class="resumo-value" id="resumoISS">R$ 0,00</span>
+                </div>
+                <div class="resumo-item">
+                    <span class="resumo-label">ICMS</span>
+                    <span class="resumo-value" id="resumoICMS">R$ 0,00</span>
+                </div>
+                <div class="resumo-item">
+                    <span class="resumo-label">IPI</span>
+                    <span class="resumo-value" id="resumoIPI">R$ 0,00</span>
+                </div>
+                <div class="resumo-item">
+                    <span class="resumo-label">PIS/COFINS</span>
+                    <span class="resumo-value" id="resumoPIS">R$ 0,00</span>
+                </div>
+                <div class="resumo-item">
+                    <span class="resumo-label">IRPJ</span>
+                    <span class="resumo-value" id="resumoIRPJ">R$ 0,00</span>
+                </div>
+                <div class="resumo-item">
+                    <span class="resumo-label">CSLL</span>
+                    <span class="resumo-value" id="resumoCSLL">R$ 0,00</span>
+                </div>
+            </div>
+            <div class="resumo-total">
+                <span class="total-label">Carga Tributária Total:</span>
+                <span class="total-value" id="resumoTotal">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📝</div>
+            <h3>Nenhum cálculo realizado</h3>
+            <p>Volte aos módulos de cálculo, insira os dados e clique em "Salvar no Cenário".</p>
+            <button class="btn btn-primary" onclick="window.location.href='student.html'">
+                Ir para Módulos de Cálculo
+            </button>
+        </div>
+    </main>
+
+    <script type="module" src="src/js/firebase-config.js"></script>
+    <script type="module" src="src/js/student.js"></script>
+    <script type="module" src="src/js/calculos-page.js"></script>
+</body>
+</html>
