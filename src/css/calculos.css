@@ -118,7 +118,7 @@
 }
 
 /* Card de Módulo */
-.modulo-card {
+.tributo-card {
     position: relative;
     background: white;
     border-radius: 16px;
@@ -128,23 +128,23 @@
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.modulo-card:hover {
+.tributo-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
-.modulo-card::before {
+.tributo-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 5px;
-    background: var(--modulo-color, #0066cc);
+    background: var(--tributo-color, #0066cc);
 }
 
 /* Header do Card */
-.modulo-header {
+.tributo-header {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -153,7 +153,7 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.modulo-icon {
+.tributo-icon {
     width: 50px;
     height: 50px;
     display: flex;
@@ -165,24 +165,24 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.modulo-title {
+.tributo-title {
     flex: 1;
 }
 
-.modulo-title h3 {
+.tributo-title h3 {
     margin: 0 0 5px 0;
     font-size: 20px;
     font-weight: 700;
     color: #333;
 }
 
-.modulo-title span {
+.tributo-title .tributo-subtitle {
     font-size: 13px;
     color: #666;
     display: block;
 }
 
-.modulo-status {
+.tributo-status {
     padding: 6px 14px;
     border-radius: 20px;
     font-size: 11px;
@@ -191,23 +191,23 @@
     letter-spacing: 0.5px;
 }
 
-.modulo-status.calculado {
+.tributo-status.status-ok {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
 }
 
-.modulo-status.pendente {
+.tributo-status.status-pending {
     background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
     color: white;
 }
 
 /* Corpo do Card */
-.modulo-body {
+.tributo-body {
     padding: 25px;
 }
 
 /* Destaque Principal */
-.modulo-destaque {
+.tributo-highlight {
     background: linear-gradient(135deg, rgba(0, 102, 204, 0.1) 0%, rgba(0, 102, 204, 0.05) 100%);
     border: 2px solid rgba(0, 102, 204, 0.2);
     border-radius: 12px;
@@ -216,7 +216,7 @@
     text-align: center;
 }
 
-.destaque-label {
+.highlight-label {
     display: block;
     font-size: 12px;
     font-weight: 600;
@@ -226,7 +226,7 @@
     margin-bottom: 10px;
 }
 
-.destaque-valor {
+.highlight-value {
     font-size: 32px;
     font-weight: 800;
     color: #0066cc;
@@ -235,11 +235,15 @@
 }
 
 /* Seções de Detalhes */
-.detalhes-section {
+.tributo-details {
+    margin-bottom: 20px;
+}
+
+.detail-section {
     margin-bottom: 25px;
 }
 
-.section-header {
+.section-title {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -251,36 +255,36 @@
     padding-bottom: 10px;
 }
 
-.detalhes-section:first-child .section-header {
+.tributo-details .detail-section:first-child .section-title {
     color: #e67e22;
     border-bottom: 2px solid #e67e22;
 }
 
-.detalhes-section:last-child .section-header {
+.tributo-details .detail-section:last-child .section-title {
     color: #27ae60;
     border-bottom: 2px solid #27ae60;
 }
 
-.section-icon {
+.section-title .section-icon {
     font-size: 16px;
 }
 
-.detalhes-section:first-child .section-icon {
+.tributo-details .detail-section:first-child .section-icon {
     color: #e67e22;
 }
 
-.detalhes-section:last-child .section-icon {
+.tributo-details .detail-section:last-child .section-icon {
     color: #27ae60;
 }
 
 /* Grid de Detalhes */
-.detalhes-grid {
+.detail-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
 
-.detalhe-item {
+.detail-item {
     display: flex;
     flex-direction: column;
     padding: 12px;
@@ -290,25 +294,25 @@
     transition: all 0.2s ease;
 }
 
-.detalhes-section:first-child .detalhe-item {
+.tributo-details .detail-section:first-child .detail-item {
     background: #fff5eb;
     border-color: rgba(230, 126, 34, 0.3);
 }
 
-.detalhes-section:first-child .detalhe-item:hover {
+.tributo-details .detail-section:first-child .detail-item:hover {
     background: #ffe6d5;
 }
 
-.detalhes-section:last-child .detalhe-item {
+.tributo-details .detail-section:last-child .detail-item {
     background: #e8f8f0;
     border-color: rgba(39, 174, 96, 0.3);
 }
 
-.detalhes-section:last-child .detalhe-item:hover {
+.tributo-details .detail-section:last-child .detail-item:hover {
     background: #d5f0e3;
 }
 
-.detalhe-key {
+.detail-key {
     font-size: 11px;
     font-weight: 600;
     color: #666;
@@ -317,20 +321,20 @@
     margin-bottom: 5px;
 }
 
-.detalhe-value {
+.detail-value {
     font-size: 14px;
     font-weight: 700;
     color: #333;
     font-family: 'Courier New', monospace;
 }
 
-.detalhe-value.monetario {
+.detail-value.monetary {
     color: #0066cc;
     font-size: 15px;
 }
 
 /* Timestamp */
-.modulo-timestamp {
+.tributo-timestamp {
     padding: 15px 25px;
     background: #f5f5f5;
     border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -341,28 +345,16 @@
 }
 
 /* Empty State */
-.empty-state {
+.tributo-empty {
     text-align: center;
-    padding: 80px 20px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-}
-
-.empty-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
-    opacity: 0.5;
-}
-
-.empty-state h3 {
-    margin: 0 0 10px 0;
-    color: #333;
-}
-
-.empty-state p {
-    margin: 0 0 25px 0;
+    padding: 40px 20px;
     color: #666;
+}
+
+.tributo-hint {
+    font-size: 13px;
+    color: #999;
+    margin-top: 10px;
 }
 
 /* Resumo Consolidado */
@@ -463,7 +455,7 @@
         align-items: stretch;
     }
     
-    .detalhes-grid {
+    .detail-grid {
         grid-template-columns: 1fr;
     }
     
@@ -477,7 +469,7 @@
         text-align: center;
     }
     
-    .modulo-header {
+    .tributo-header {
         flex-direction: column;
         text-align: center;
     }
@@ -488,19 +480,19 @@
         grid-template-columns: 1fr;
     }
     
-    .destaque-valor {
+    .highlight-value {
         font-size: 24px;
     }
     
-    .modulo-title h3 {
+    .tributo-title h3 {
         font-size: 18px;
     }
 }
 
 /* Cores específicas por módulo */
-.modulo-card[data-modulo="iss"] { --modulo-color: #28a745; }
-.modulo-card[data-modulo="icms"] { --modulo-color: #17a2b8; }
-.modulo-card[data-modulo="ipi"] { --modulo-color: #ffc107; }
-.modulo-card[data-modulo="pisCofins"] { --modulo-color: #dc3545; }
-.modulo-card[data-modulo="irpj"] { --modulo-color: #6f42c1; }
-.modulo-card[data-modulo="csll"] { --modulo-color: #fd7e14; }
+.tributo-card[data-modulo="iss"] { --tributo-color: #28a745; }
+.tributo-card[data-modulo="icms"] { --tributo-color: #17a2b8; }
+.tributo-card[data-modulo="ipi"] { --tributo-color: #ffc107; }
+.tributo-card[data-modulo="pisCofins"] { --tributo-color: #dc3545; }
+.tributo-card[data-modulo="irpj"] { --tributo-color: #6f42c1; }
+.tributo-card[data-modulo="csll"] { --tributo-color: #fd7e14; }
