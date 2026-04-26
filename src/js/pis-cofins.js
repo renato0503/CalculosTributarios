@@ -63,7 +63,19 @@ async function handlePISCofinsCalculation(event) {
     const aliquotaCofins = parseFloat(document.getElementById('cofinsAliquota').value) / 100;
     const tipoTributacao = document.getElementById('pisTipoTributacao').value;
     const cumulativo = document.getElementById('pisCumulativo').checked;
+    const excluirISS = document.getElementById('pisExcluirISS').checked;
     const creditos = parseFloat(document.getElementById('pis-cofins-creditos').value) || 0;
+
+    // 🔹 TEMA 118 STF: Capturar ISS calculado no cenário
+    let issDevido = 0;
+    try {
+        const dadosISS = await loadModuleData('iss');
+        if (dadosISS && dadosISS.outputs) {
+            issDevido = parseFloat(dadosISS.outputs.issDevido) || 0;
+        }
+    } catch (e) {
+        console.warn('Não foi possível carregar o ISS para o Tema 118:', e);
+    }
 
     if (isNaN(faturamento) || faturamento < 0) {
         alert('Faturamento inválido.');
@@ -72,7 +84,7 @@ async function handlePISCofinsCalculation(event) {
 
     const resultados = calcularPISCofins(
         faturamento, acrescimos, exclusoes, aliquotaPIS, aliquotaCofins, 
-        tipoTributacao, cumulativo, creditos
+        tipoTributacao, cumulativo, creditos, excluirISS, issDevido
     );
 
     exibirResultadosPISCofins(resultados);
@@ -81,7 +93,7 @@ async function handlePISCofinsCalculation(event) {
         faturamento, acrescimos, exclusoes,
         aliquotaPIS: aliquotaPIS * 100, 
         aliquotaCofins: aliquotaCofins * 100, 
-        tipoTributacao, cumulativo, creditos 
+        tipoTributacao, cumulativo, excluirISS, creditos 
     };
     currentOutputs = resultados;
 
@@ -91,23 +103,12 @@ async function handlePISCofinsCalculation(event) {
     }
 }
 
-function calcularPISCofins(faturamento, acrescimos, exclusoes, aliquotaPIS, aliquotaCofins, tipoTributacao, cumulativo, creditos = 0) {
-    const baseCalculoReal = Math.max(0, faturamento + acrescimos - exclusoes);
+function calcularPISCofins(faturamento, acrescimos, exclusoes, aliquotaPIS, aliquotaCofins, tipoTributacao, cumulativo, baseCreditos = 0, excluirISS = false, issDevido = 0) {
+    // 🔹 UNIFICAÇÃO DA BASE: Faturamento + Acréscimos - Exclusões
+    const valorExclusaoISS = excluirISS ? issDevido : 0;
+    const baseCalculoReal = Math.max(0, faturamento + acrescimos - exclusoes - valorExclusaoISS);
     
-    // 🔹 VALIDAÇÃO AULA 3: 
-    // No Regime Cumulativo (tipoTributacao = 'cumulativo'), as alíquotas JÁ SÃO reduzidas
-    // PIS cumulativo = 0,65% | COFINS cumulativo = 3,00%
-    // O código aplica 65% das alíquotas quando:
-    // 1. O tipo de tributação é "cumulativo" (regime cumulativo)
-    // 2. O tipo é "nao_cumulativo" E o checkbox cumulativo está marcado
-    
-    let aplicarReducao = false;
-    
-    if (tipoTributacao === 'cumulativo') {
-        aplicarReducao = true;
-    } else if (tipoTributacao === 'nao_cumulativo' && cumulativo) {
-        aplicarReducao = true;
-    }
+    const aplicarReducao = cumulativo; 
     
     let pisAliquotaCalc = aliquotaPIS;
     let cofinsAliquotaCalc = aliquotaCofins;
@@ -121,12 +122,21 @@ function calcularPISCofins(faturamento, acrescimos, exclusoes, aliquotaPIS, aliq
     const debitoCofins = baseCalculoReal * cofinsAliquotaCalc;
     const debitoBruto = debitoPis + debitoCofins;
     
-    const totalLiquido = Math.max(0, debitoBruto - creditos);
-    const saldoCredor = Math.max(0, creditos - debitoBruto);
-
-    const cbsTeste = baseCalculoReal * ALIQUOTA_CBS_TESTE;
-    const ibsTeste = baseCalculoReal * ALIQUOTA_IBS_TESTE;
+    // 🔹 CÁLCULO MONETÁRIO DOS CRÉDITOS (Apenas Não Cumulativo)
+    // O crédito é o imposto recuperado sobre a base de insumos/custos.
+    const valorCredito = baseCreditos * (pisAliquotaCalc + cofinsAliquotaCalc);
+    
+    // 🔹 REFORMA 2026: IVA de Teste (1%) incide APENAS sobre o Faturamento Bruto
+    const cbsTeste = faturamento * ALIQUOTA_CBS_TESTE;
+    const ibsTeste = faturamento * ALIQUOTA_IBS_TESTE;
     const totalTeste = cbsTeste + ibsTeste;
+
+    // 🔹 NEUTRALIDADE: O valor do teste reduz o PIS/COFINS a pagar
+    let totalLiquido = Math.max(0, debitoBruto - valorCredito - totalTeste);
+
+    const saldoCredor = Math.max(0, valorCredito - debitoBruto);
+
+
 
     let pisRetido = 0;
     let cofinsRetido = 0;
@@ -151,7 +161,8 @@ function calcularPISCofins(faturamento, acrescimos, exclusoes, aliquotaPIS, aliq
         pis_devido: debitoPis.toFixed(2),
         cofins_devido: debitoCofins.toFixed(2),
         debito_bruto: debitoBruto.toFixed(2),
-        creditos: creditos.toFixed(2),
+        creditos: valorCredito.toFixed(2),
+        base_creditos: baseCreditos.toFixed(2),
         total_liquido: totalLiquido.toFixed(2),
         saldo_credor: saldoCredor.toFixed(2),
         pis_retencao: pisRetido.toFixed(2),
@@ -162,8 +173,11 @@ function calcularPISCofins(faturamento, acrescimos, exclusoes, aliquotaPIS, aliq
         aliquota_efetiva: (aliquotaEfetiva * 100).toFixed(2),
         tipo_tributacao: tipoTributacao,
         cumulativo: aplicarReducao,
+        excluir_iss: excluirISS,
+        iss_excluido: valorExclusaoISS.toFixed(2),
         timestamp: new Date().toISOString()
     };
+
 }
 
 function exibirResultadosPISCofins(resultados) {
@@ -190,6 +204,15 @@ function exibirResultadosPISCofins(resultados) {
     document.getElementById('pisIbs').textContent = `R$ ${parseFloat(resultados.ibs_teste).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     document.getElementById('pisTotalTeste').textContent = `R$ ${parseFloat(resultados.total_teste).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+    // Feedback visual do Tema 118
+    if (resultados.excluir_iss === true) {
+        const info = document.createElement('div');
+        info.className = 'badge badge-success';
+        info.style.marginTop = '5px';
+        info.textContent = `⚖️ Tema 118 STF Aplicado: -R$ ${parseFloat(resultados.iss_excluido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} na base`;
+        msgContainer.appendChild(info);
+    }
+
     document.getElementById('pisCofinsResultados').classList.remove('hidden');
 }
 
@@ -210,6 +233,7 @@ async function loadPISCofinsData() {
             document.getElementById('pisTipoTributacao').dispatchEvent(new Event('change'));
             
             document.getElementById('pisCumulativo').checked = data.inputs.cumulativo || false;
+            document.getElementById('pisExcluirISS').checked = data.inputs.excluirISS || false;
             document.getElementById('pis-cofins-creditos').value = data.inputs.creditos || 0;
 
             if (data.outputs) {

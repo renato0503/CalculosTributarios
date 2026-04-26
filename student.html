@@ -116,6 +116,7 @@
                     <label for="icmsTipoOperacao">Tipo de Operação:</label>
                     <select id="icmsTipoOperacao">
                         <option value="substitution">Substituição Tributária</option>
+                        <option value="estimativa_mt">Estimativa Simplificada (Carga Média - MT)</option>
                         <option value="normal">Operação Normal</option>
                         <option value="importacao">Importação</option>
                     </select>
@@ -203,6 +204,11 @@
                     <label for="icmsMVA">Margem de Valor Agregado - MVA (%):</label>
                     <input type="number" id="icmsMVA" placeholder="0.00" step="0.01" value="0">
                 </div>
+                <!-- 🔹 NOVO CAMPO: ALÍQUOTA CNAE (MT) -->
+                <div class="form-group" id="icms-cnae-group" style="display:none;">
+                    <label for="icmsCNAE">Alíquota CNAE - Carga Média (%):</label>
+                    <input type="number" id="icmsCNAE" placeholder="0.00" step="0.01" value="0">
+                </div>
                 <div class="form-group">
                     <label for="icmsCEST">CEST (Opcional):</label>
                     <input type="text" id="icmsCEST" placeholder="00.000.00">
@@ -247,9 +253,10 @@
                     <span id="icmsSTTotal">R$ 0.00</span>
                 </div>
                 <div class="resultado-item destaque-secundario">
-                    <label>ICMS-ST a Recolher:</label>
+                    <label>ICMS-ST a Recolher (já com créditos):</label>
                     <span id="icmsSTRecolher">R$ 0.00</span>
                 </div>
+
                 <div class="resultado-item">
                     <label>DIFAL:</label>
                     <span id="icmsDIFAL">R$ 0.00</span>
@@ -269,49 +276,72 @@
 
         <!-- Módulo IPI -->
         <section id="ipi" class="module">
-            <h2>Imposto sobre Produtos Industrializados (IPI)</h2>
+            <h2>IPI - Imposto sobre Produtos Industrializados</h2>
             <form id="ipiForm" class="module-form">
                 <div class="form-group">
-                    <label for="ipiBaseCalculo">Base de Cálculo (R$):</label>
-                    <input type="number" id="ipiBaseCalculo" placeholder="0.00" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="ipiAliquota">Alíquota (%):</label>
-                    <input type="number" id="ipiAliquota" placeholder="5" min="0" max="30" step="0.1" required>
-                </div>
-                <div class="form-group">
-                    <label for="ipiTipoIncidência">Tipo de Incidência:</label>
+                    <label for="ipiTipoIncidencia">Tipo de Incidência:</label>
                     <select id="ipiTipoIncidencia">
-                        <option value="ad_valorem">Ad Valorem</option>
-                        <option value="especifica">Específica</option>
+                        <option value="ad_valorem">Ad Valorem (%)</option>
+                        <option value="especifica">Específica (R$ por Unidade)</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="ipiFrete">Frete (R$):</label>
-                    <input type="number" id="ipiFrete" placeholder="0.00" step="0.01" value="0">
+
+                <!-- Campos Ad Valorem -->
+                <div id="ipi-ad-valorem-fields">
+                    <div class="form-group">
+                        <label id="label-ipi-valor" for="ipiBaseCalculo">Valor do Produto (R$):</label>
+                        <input type="number" id="ipiBaseCalculo" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label id="label-ipi-aliquota" for="ipiAliquota">Alíquota (%):</label>
+                        <input type="number" id="ipiAliquota" placeholder="5" min="0" max="100" step="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ipiFrete">Frete (R$):</label>
+                        <input type="number" id="ipiFrete" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="ipiSeguro">Seguro (R$):</label>
+                        <input type="number" id="ipiSeguro" placeholder="0.00" step="0.01" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="ipiOutrasDespesas">Outras Despesas (R$):</label>
+                        <input type="number" id="ipiOutrasDespesas" placeholder="0.00" step="0.01" value="0">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="ipiSeguro">Seguro (R$):</label>
-                    <input type="number" id="ipiSeguro" placeholder="0.00" step="0.01" value="0">
+
+                <!-- Campos Específica -->
+                <div id="ipi-especifica-fields" style="display:none">
+                    <div class="form-group">
+                        <label for="ipiQuantidade">Quantidade:</label>
+                        <input type="number" id="ipiQuantidade" placeholder="0" step="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="ipiValorFixo">Valor Fixo por Unidade (R$):</label>
+                        <input type="number" id="ipiValorFixo" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="ipiValorUnitarioProd">Valor Unitário do Produto (R$):</label>
+                        <input type="number" id="ipiValorUnitarioProd" placeholder="0.00" step="0.01">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="ipiOutrasDespesas">Outras Despesas (R$):</label>
-                    <input type="number" id="ipiOutrasDespesas" placeholder="0.00" step="0.01" value="0">
-                </div>
-                <button type="submit" class="btn btn-primary">Calcular</button>
+
+                <button type="submit" class="btn btn-primary">Calcular IPI</button>
             </form>
+
             <div id="ipiResultados" class="resultados hidden">
-                <h3>Resultados</h3>
+                <h3>Resultados IPI</h3>
                 <div class="resultado-item">
-                    <label>Base IPI:</label>
+                    <label>Base de Cálculo / Quantidade:</label>
                     <span id="ipiBaseTotal">R$ 0.00</span>
                 </div>
                 <div class="resultado-item">
                     <label>IPI Devido:</label>
                     <span id="ipiDevido">R$ 0.00</span>
                 </div>
-                <div class="resultado-item">
-                    <label>Preço de Venda:</label>
+                <div class="resultado-item destaque">
+                    <label>Valor Total da Operação (NF-e):</label>
                     <span id="ipiPrecoVenda">R$ 0.00</span>
                 </div>
                 <!-- 🔹 ALTERAÇÃO FLUXO SALVAR→DASHBOARD -->
@@ -368,6 +398,11 @@
                     <input type="checkbox" id="pisCumulativo">
                     <label for="pisCumulativo">Regime Cumulativo (65% da alíquota)</label>
                 </div>
+                <!-- 🔹 NOVO: TEMA 118 STF -->
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="pisExcluirISS">
+                    <label for="pisExcluirISS">Excluir ISS da Base (Simular Tema 118 STF)</label>
+                </div>
                 <button type="submit" class="btn btn-primary">Calcular</button>
             </form>
             <div id="pisCofinsResultados" class="resultados hidden">
@@ -421,8 +456,13 @@
             <form id="irpjForm" class="module-form">
                 <!-- DRE Simplificada -->
                 <div class="form-group">
-                    <label for="irpj-receita">Receita Bruta/Faturamento (R$):</label>
+                    <label for="irpj-receita">Faturamento Trimestral (Receita Bruta - R$):</label>
                     <input type="number" id="irpj-receita" placeholder="0.00" step="0.01" required>
+                </div>
+                <!-- 🔹 NOVO: LIMINAR LC 224/2025 -->
+                <div class="form-group checkbox-group" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <input type="checkbox" id="irpjLiminarLC224">
+                    <label for="irpjLiminarLC224"><strong>Liminar Ativa:</strong> Suspender majoração da LC 224/2025</label>
                 </div>
                 
                 <div class="form-row">
@@ -522,9 +562,14 @@
                 
                 <div id="csll-manual-fields" style="display:none;">
                     <div class="form-group">
-                        <label for="csll-base">Base de Cálculo CSLL (R$):</label>
+                        <label for="csll-base">Faturamento Trimestral CSLL (R$):</label>
                         <input type="number" id="csll-base" placeholder="0.00" step="0.01">
                     </div>
+                </div>
+                <!-- 🔹 NOVO: LIMINAR LC 224/2025 -->
+                <div class="form-group checkbox-group" style="background: rgba(255, 193, 7, 0.1); border: 1px solid #ffc107; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <input type="checkbox" id="csllLiminarLC224">
+                    <label for="csllLiminarLC224"><strong>Liminar Ativa:</strong> Suspender majoração da LC 224/2025</label>
                 </div>
                 
                 <div class="form-group">

@@ -6,9 +6,22 @@ let currentOutputs = null;
 function initializeIPIModule() {
     const ipiForm = document.getElementById('ipiForm');
     const btnSalvar = document.getElementById('btn-salvar-ipi');
+    const tipoIncidencia = document.getElementById('ipiTipoIncidencia');
     
     if (ipiForm) {
         ipiForm.addEventListener('submit', handleIPICalculation);
+
+        // Reatividade da Interface: Troca de Incidência
+        if (tipoIncidencia) {
+            tipoIncidencia.addEventListener('change', function() {
+                const isEspecífica = this.value === 'especifica';
+                document.getElementById('ipi-ad-valorem-fields').style.display = isEspecífica ? 'none' : 'block';
+                document.getElementById('ipi-especifica-fields').style.display = isEspecífica ? 'block' : 'none';
+                
+                // Limpar campos ao trocar para evitar cálculos residuais
+                if (btnSalvar) btnSalvar.style.display = 'none';
+            });
+        }
 
         if (btnSalvar) {
             btnSalvar.addEventListener('click', () => {
@@ -16,8 +29,7 @@ function initializeIPIModule() {
             });
         }
 
-        const inputs = ipiForm.querySelectorAll('input, select');
-        inputs.forEach(input => {
+        ipiForm.querySelectorAll('input, select').forEach(input => {
             input.addEventListener('input', () => {
                 if (btnSalvar) btnSalvar.style.display = 'none';
             });
@@ -42,27 +54,26 @@ async function handleIPICalculation(event) {
 
     const cenarioAtivo = sessionStorage.getItem('cenarioAtivo');
     if (!cenarioAtivo) {
-        alert('Selecione ou crie um cenário primeiro!');
+        window.showToast('⚠️ Selecione ou crie um cenário primeiro!', 'warning');
         return;
     }
 
-    const baseCalculo = parseFloat(document.getElementById('ipiBaseCalculo').value);
-    const aliquota = parseFloat(document.getElementById('ipiAliquota').value) / 100;
-    const tipoIncidencia = document.getElementById('ipiTipoIncidencia').value;
-    const valorFrete = parseFloat(document.getElementById('ipiFrete').value) || 0;
-    const valorSeguro = parseFloat(document.getElementById('ipiSeguro').value) || 0;
-    const outrasDespesas = parseFloat(document.getElementById('ipiOutrasDespesas').value) || 0;
+    const inputs = {
+        tipoIncidencia: document.getElementById('ipiTipoIncidencia').value,
+        baseCalculo: parseFloat(document.getElementById('ipiBaseCalculo').value) || 0,
+        aliquota: parseFloat(document.getElementById('ipiAliquota').value) || 0,
+        valorFrete: parseFloat(document.getElementById('ipiFrete').value) || 0,
+        valorSeguro: parseFloat(document.getElementById('ipiSeguro').value) || 0,
+        outrasDespesas: parseFloat(document.getElementById('ipiOutrasDespesas').value) || 0,
+        quantidade: parseFloat(document.getElementById('ipiQuantidade').value) || 0,
+        valorFixo: parseFloat(document.getElementById('ipiValorFixo').value) || 0,
+        valorUnitarioProd: parseFloat(document.getElementById('ipiValorUnitarioProd').value) || 0
+    };
 
-    if (isNaN(baseCalculo) || baseCalculo <= 0) {
-        alert('Base de cálculo inválida.');
-        return;
-    }
-
-    const resultados = calcularIPI(baseCalculo, aliquota, tipoIncidencia, valorFrete, valorSeguro, outrasDespesas);
-
+    const resultados = calcularIPI(inputs);
     exibirResultadosIPI(resultados);
 
-    currentInputs = { baseCalculo, aliquota: aliquota * 100, tipoIncidencia, valorFrete, valorSeguro, outrasDespesas };
+    currentInputs = inputs;
     currentOutputs = resultados;
 
     const btnSalvar = document.getElementById('btn-salvar-ipi');
@@ -71,38 +82,45 @@ async function handleIPICalculation(event) {
     }
 }
 
-function calcularIPI(baseCalculo, aliquota, tipoIncidencia, valorFrete, valorSeguro, outrasDespesas) {
-    const baseTotal = baseCalculo + valorFrete + valorSeguro + outrasDespesas;
-    
-    const ipiDevido = baseTotal * aliquota;
-    const precoVenda = baseCalculo + ipiDevido;
+function calcularIPI(inputs) {
+    let ipiDevido = 0;
+    let baseExibicao = 0;
+    let valorTotalNota = 0;
+    const { tipoIncidencia, baseCalculo, aliquota, valorFrete, valorSeguro, outrasDespesas, quantidade, valorFixo, valorUnitarioProd } = inputs;
 
-    let classificacao = 'NCM genérico';
-    let tipoAliquota = 'ad valorem';
-
-    if (tipoIncidencia === 'especifica') {
-        tipoAliquota = 'específica';
+    if (tipoIncidencia === 'ad_valorem') {
+        // Lógica Ad Valorem (Base = Produto + Acessórios)
+        const baseIPI = baseCalculo + valorFrete + valorSeguro + outrasDespesas;
+        ipiDevido = baseIPI * (aliquota / 100);
+        baseExibicao = baseIPI;
+        valorTotalNota = baseCalculo + valorFrete + valorSeguro + outrasDespesas + ipiDevido;
+    } else {
+        // Lógica Específica (IPI = Quantidade * Valor Fixo)
+        ipiDevido = quantidade * valorFixo;
+        baseExibicao = quantidade;
+        // Total Nota = (Quantidade * Valor Unitário) + IPI
+        valorTotalNota = (quantidade * valorUnitarioProd) + ipiDevido;
     }
 
     return {
-        base_produto: baseCalculo.toFixed(2),
-        valor_frete: valorFrete.toFixed(2),
-        valor_seguro: valorSeguro.toFixed(2),
-        outras_despesas: outrasDespesas.toFixed(2),
-        base_ipi: baseTotal.toFixed(2),
-        aliquota_percent: (aliquota * 100).toFixed(2),
-        ipi_devido: ipiDevido.toFixed(2),
-        preco_venda: precoVenda.toFixed(2),
         tipo_incidencia: tipoIncidencia,
-        classificacao_tributaria: classificacao,
+        base_exibicao: baseExibicao.toFixed(2),
+        ipi_devido: ipiDevido.toFixed(2),
+        preco_venda: valorTotalNota.toFixed(2), // Mantendo nome de campo para compatibilidade de UI
         timestamp: new Date().toISOString()
     };
 }
 
-function exibirResultadosIPI(resultados) {
-    document.getElementById('ipiDevido').textContent = `R$ ${parseFloat(resultados.ipi_devido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('ipiBaseTotal').textContent = `R$ ${parseFloat(resultados.base_ipi).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('ipiPrecoVenda').textContent = `R$ ${parseFloat(resultados.preco_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+function exibirResultadosIPI(res) {
+    const format = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const isEspecífica = res.tipo_incidencia === 'especifica';
+
+    document.getElementById('ipiBaseTotal').textContent = isEspecífica ? 
+        parseFloat(res.base_exibicao).toFixed(0) : 
+        format(parseFloat(res.base_exibicao));
+        
+    document.getElementById('ipiDevido').textContent = format(parseFloat(res.ipi_devido));
+    document.getElementById('ipiPrecoVenda').textContent = format(parseFloat(res.preco_venda));
 
     document.getElementById('ipiResultados').classList.remove('hidden');
 }
@@ -118,12 +136,20 @@ async function loadIPIData() {
     try {
         const data = await loadModuleData('ipi');
         if (data && data.inputs) {
-            document.getElementById('ipiBaseCalculo').value = data.inputs.baseCalculo || '';
-            document.getElementById('ipiAliquota').value = data.inputs.aliquota || '';
-            document.getElementById('ipiTipoIncidencia').value = data.inputs.tipoIncidencia || 'ad_valorem';
-            document.getElementById('ipiFrete').value = data.inputs.valorFrete || '';
-            document.getElementById('ipiSeguro').value = data.inputs.valorSeguro || '';
-            document.getElementById('ipiOutrasDespesas').value = data.inputs.outrasDespesas || '';
+            const inputs = data.inputs;
+            document.getElementById('ipiTipoIncidencia').value = inputs.tipoIncidencia || 'ad_valorem';
+            document.getElementById('ipiBaseCalculo').value = inputs.baseCalculo || '';
+            document.getElementById('ipiAliquota').value = inputs.aliquota || '';
+            document.getElementById('ipiFrete').value = inputs.valorFrete || '';
+            document.getElementById('ipiSeguro').value = inputs.valorSeguro || '';
+            document.getElementById('ipiOutrasDespesas').value = inputs.outrasDespesas || '';
+            document.getElementById('ipiQuantidade').value = inputs.quantidade || '';
+            document.getElementById('ipiValorFixo').value = inputs.valorFixo || '';
+            document.getElementById('ipiValorUnitarioProd').value = inputs.valorUnitarioProd || '';
+
+            // Disparar o evento de mudança para ajustar a visibilidade
+            document.getElementById('ipiTipoIncidencia').dispatchEvent(new Event('change'));
+
             if (data.outputs) {
                 exibirResultadosIPI(data.outputs);
             }

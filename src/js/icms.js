@@ -1,4 +1,6 @@
 import { saveModuleData, loadModuleData, handleModuleSave } from './student.js';
+import { buscarMVAporCEST } from '../data/cest-mva.js';
+
 
 let currentInputs = null;
 let currentOutputs = null;
@@ -17,9 +19,12 @@ function initializeICMSModule() {
         // 🔹 CRÉDITOS & ST: Toggle dos campos conforme operação
         tipoOperacaoSelect.addEventListener('change', () => {
             const tipoAtual = tipoOperacaoSelect.value;
+            const cnaeGroup = document.getElementById('icms-cnae-group');
+            const destGroup = document.getElementById('icms-dest-group');
+            const origGroup = document.getElementById('icms-orig-group');
             
-            // Créditos apenas em Normal/Importação
-            const tiposComCreditos = ['normal', 'importacao'];
+            // Créditos agora também em Substituição Tributária conforme solicitação
+            const tiposComCreditos = ['normal', 'importacao', 'substitution'];
             if (tiposComCreditos.includes(tipoAtual)) {
                 creditosGroup.style.display = 'block';
             } else {
@@ -28,11 +33,19 @@ function initializeICMSModule() {
             }
 
             // MVA apenas em Substituição Tributária
-            if (tipoAtual === 'substitution') {
-                mvaGroup.style.display = 'block';
+            mvaGroup.style.display = tipoAtual === 'substitution' ? 'block' : 'none';
+            if (tipoAtual !== 'substitution') document.getElementById('icmsMVA').value = '0';
+
+            // 🔹 NOVO: Carga Média (MT)
+            if (cnaeGroup) cnaeGroup.style.display = tipoAtual === 'estimativa_mt' ? 'block' : 'none';
+            
+            // Ocultar outros campos se for Carga Média
+            if (tipoAtual === 'estimativa_mt') {
+                if (destGroup) destGroup.style.display = 'none';
+                if (origGroup) origGroup.style.display = 'none';
             } else {
-                mvaGroup.style.display = 'none';
-                document.getElementById('icmsMVA').value = '0';
+                if (destGroup) destGroup.style.display = (tipoAtual === 'substitution' || tipoAtual === 'importacao') ? 'block' : 'none';
+                if (origGroup) origGroup.style.display = tipoAtual === 'normal' ? 'block' : 'none';
             }
         });
 
@@ -48,6 +61,32 @@ function initializeICMSModule() {
                 if (btnSalvar) btnSalvar.style.display = 'none';
             });
         });
+
+        // 🔹 Lógica de Auto-preenchimento MVA via CEST
+        const cestInput = document.getElementById('icmsCEST');
+        const mvaInput = document.getElementById('icmsMVA');
+
+        if (cestInput && mvaInput) {
+            cestInput.addEventListener('input', (e) => {
+                const cestDigitado = e.target.value;
+                if (!cestDigitado) return;
+
+                const mvaEncontrado = buscarMVAporCEST(cestDigitado);
+
+                if (mvaEncontrado !== null) {
+                    mvaInput.value = mvaEncontrado;
+                    mvaInput.style.borderColor = '#28a745'; // Borda verde indicando sucesso
+                    
+                    const tipoOperacao = tipoOperacaoSelect.value;
+                    if (tipoOperacao === 'substitution' && mvaGroup) {
+                        mvaGroup.style.display = 'block';
+                    }
+                } else {
+                    mvaInput.style.borderColor = '';
+                }
+            });
+        }
+
         
         loadICMSData();
     }
@@ -82,6 +121,7 @@ async function handleICMSCalculation(event) {
     const ipi = parseFloat(document.getElementById('icmsIPI').value) || 0;
     const outrasDespesas = parseFloat(document.getElementById('icmsOutrasDespesas').value) || 0;
     const mva = parseFloat(document.getElementById('icmsMVA').value) / 100 || 0;
+    const aliquotaCNAE = parseFloat(document.getElementById('icmsCNAE').value) / 100 || 0;
     const cest = document.getElementById('icmsCEST').value;
     const creditos = parseFloat(document.getElementById('icms-creditos').value) || 0;
 
@@ -92,14 +132,14 @@ async function handleICMSCalculation(event) {
 
     const resultados = calcularICMS(
         baseCalculo, aliquota, operacaoTipo, estadoOrigem, estadoDestino, 
-        creditos, frete, ipi, outrasDespesas, mva
+        creditos, frete, ipi, outrasDespesas, mva, aliquotaCNAE
     );
 
     exibirResultadosICMS(resultados);
 
     currentInputs = { 
         baseCalculo, aliquota: aliquota * 100, operacaoTipo, estadoOrigem, estadoDestino,
-        frete, ipi, outrasDespesas, mva: mva * 100, cest, creditos
+        frete, ipi, outrasDespesas, mva: mva * 100, aliquotaCNAE: aliquotaCNAE * 100, cest, creditos
     };
     currentOutputs = resultados;
 
@@ -109,7 +149,16 @@ async function handleICMSCalculation(event) {
     }
 }
 
-function calcularICMS(baseCalculo, aliquota, tipoOperacao, estadoOrigem, estadoDestino, creditos = 0, frete = 0, ipi = 0, outrasDespesas = 0, mva = 0) {
+function calcularICMS(baseCalculo, aliquota, tipoOperacao, estadoOrigem, estadoDestino, creditos = 0, frete = 0, ipi = 0, outrasDespesas = 0, mva = 0, aliquotaCNAE = 0) {
+    // 🔹 ALÍQUOTAS INTERNAS (Utilizadas para ST e DIFAL)
+    const aliquotasInternas = {
+        'AC': 19, 'AL': 19, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20,
+        'ES': 17, 'GO': 19, 'MA': 22, 'MT': 17, 'MS': 17, 'MG': 18, 'PA': 19,
+        'PB': 20, 'PR': 19.5, 'PE': 20.5, 'PI': 21, 'RJ': 22, 'RN': 20, 'RS': 17,
+        'RO': 19.5, 'RR': 20, 'SC': 17, 'SE': 19, 'SP': 18, 'TO': 20
+    };
+
+    // ICMS Próprio (Crédito da Origem) - Voltando a ser sobre a Base de Cálculo apenas (Mercadoria) conforme Ponto 5
     const icmsProprio = baseCalculo * aliquota;
     
     let difal = 0;
@@ -118,42 +167,40 @@ function calcularICMS(baseCalculo, aliquota, tipoOperacao, estadoOrigem, estadoD
     let icmsSTTotal = 0;
     let icmsSTRecolher = 0;
 
-    // 🔹 ALÍQUOTAS INTERNAS (Utilizadas para ST e DIFAL)
-    const aliquotasInternas = {
-        'AC': 19, 'AL': 19, 'AP': 18, 'AM': 20, 'BA': 20.5, 'CE': 20, 'DF': 20,
-        'ES': 17, 'GO': 19, 'MA': 22, 'MT': 18, 'MS': 17, 'MG': 18, 'PA': 19,
-        'PB': 20, 'PR': 19.5, 'PE': 20.5, 'PI': 21, 'RJ': 22, 'RN': 20, 'RS': 17,
-        'RO': 19.5, 'RR': 20, 'SC': 17, 'SE': 19, 'SP': 18, 'TO': 20
-    };
-
     const isInterestadual = estadoOrigem !== estadoDestino && estadoOrigem && estadoDestino;
-    const aliquotaInternaDestino = (aliquotasInternas[estadoDestino] || 18) / 100;
+    const aliquotaInternaDestino = (aliquotasInternas[estadoDestino] || 17) / 100;
 
     if (tipoOperacao === 'substitution') {
         // Fórmula ST: (Base + Frete + IPI + Despesas) * (1 + MVA)
         baseST = (baseCalculo + frete + ipi + outrasDespesas) * (1 + mva);
         // ICMS-ST Total = Base ST * Alíquota Interna Destino
         icmsSTTotal = baseST * aliquotaInternaDestino;
-        // ICMS-ST a Recolher = ICMS-ST Total - ICMS Próprio
-        icmsSTRecolher = Math.max(0, icmsSTTotal - icmsProprio);
+        // ICMS-ST a Recolher = ICMS-ST Total - ICMS Próprio - Créditos (Abate duplo conforme solicitado)
+        icmsSTRecolher = Math.max(0, icmsSTTotal - icmsProprio - creditos);
+    } else if (tipoOperacao === 'estimativa_mt') {
+        // 🔹 LÓGICA MT: Estimativa Simplificada (Carga Média)
+        // No MT, a base é o total do documento e a cadeia se encerra sem créditos
+        baseST = baseCalculo + frete + ipi + outrasDespesas;
+        icmsSTRecolher = baseST * aliquotaCNAE;
+        icmsProprio = 0; // Ignora o próprio na carga média direta
     }
 
     if (isInterestadual) {
-        // DIFAL = Base * (Alíquota Interna Destino - Alíquota Interestadual informada)
+        // DIFAL
         difal = baseCalculo * (aliquotaInternaDestino - aliquota);
-        // FCP em operações normais interestaduais geralmente depende de ser consumidor final.
-        // Para simplificar e evitar discrepâncias em testes básicos, vamos zerar por padrão em 'normal'.
-        fcp = (tipoOperacao === 'substitution') ? (baseCalculo * 0.01) : 0; 
+        fcp = 0;
     }
+
+
 
     // 🔹 CBS/IBS TESTE (1% total)
     const cbsTeste = baseCalculo * 0.009;
     const ibsTeste = baseCalculo * 0.001;
 
     // Débito Bruto = Próprio + ST a Recolher + DIFAL + FCP
-    const debitoBruto = icmsProprio + icmsSTRecolher + difal + fcp;
-    const icmsLiquido = Math.max(0, debitoBruto - creditos);
-    const saldoCredor = Math.max(0, creditos - debitoBruto);
+    const debitoBruto = tipoOperacao === 'estimativa_mt' ? icmsSTRecolher : (icmsProprio + icmsSTRecolher + difal + fcp);
+    const icmsLiquido = Math.max(0, debitoBruto - (tipoOperacao === 'estimativa_mt' ? 0 : creditos));
+    const saldoCredor = Math.max(0, (tipoOperacao === 'estimativa_mt' ? 0 : creditos) - debitoBruto);
 
     return {
         base_calculo: baseCalculo.toFixed(2),
@@ -241,6 +288,7 @@ async function loadICMSData() {
             document.getElementById('icmsIPI').value = data.inputs.ipi || 0;
             document.getElementById('icmsOutrasDespesas').value = data.inputs.outrasDespesas || 0;
             document.getElementById('icmsMVA').value = data.inputs.mva || 0;
+            document.getElementById('icmsCNAE').value = data.inputs.aliquotaCNAE || 0;
             document.getElementById('icmsCEST').value = data.inputs.cest || '';
             document.getElementById('icms-creditos').value = data.inputs.creditos || 0;
             

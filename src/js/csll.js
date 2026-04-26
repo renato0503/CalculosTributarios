@@ -60,7 +60,9 @@ async function getCSLLInputs() {
         regime,
         baseCalculo,
         coeficiente: parseFloat(document.getElementById('csll-coeficiente').value) || 32,
-        receitaIrpj: parseFloat(document.getElementById('irpj-receita')?.value) || 0
+        receitaManual: parseFloat(document.getElementById('csll-base').value) || 0,
+        receitaIrpj: parseFloat(document.getElementById('irpj-receita')?.value) || 0,
+        liminar: document.getElementById('csllLiminarLC224').checked
     };
 }
 
@@ -75,10 +77,29 @@ async function handleCSLLCalculation(event) {
 
 function calcularCSLLLogic(inputs) {
     let baseFinal = inputs.baseCalculo;
+    const regime = inputs.regime;
+    const liminarAtiva = inputs.liminar === true;
 
-    if (inputs.regime === 'presumido' && !inputs.usarIRPJ) {
-        const coef = inputs.coeficiente / 100;
-        baseFinal = inputs.receitaIrpj * coef;
+    if (regime === 'presumido' && !inputs.usarIRPJ) {
+        const LIMITE_TRIMESTRAL = 1250000.00;
+        const coefPadrao = parseFloat(inputs.coeficiente) / 100;
+        const receita = parseFloat(inputs.receitaManual) || 0;
+
+        console.log(`[CSLL] Calculando Presumido. Receita: ${receita}, Coef: ${coefPadrao}, Liminar: ${liminarAtiva}`);
+
+        if (liminarAtiva) {
+            baseFinal = receita * coefPadrao;
+        } else if (receita > LIMITE_TRIMESTRAL) {
+            const parcelaNormal = LIMITE_TRIMESTRAL * coefPadrao;
+            const valorExcedente = receita - LIMITE_TRIMESTRAL;
+            const coefMajorado = coefPadrao * 1.10;
+            const parcelaMajorada = valorExcedente * coefMajorado;
+            
+            baseFinal = parcelaNormal + parcelaMajorada;
+            console.log(`[CSLL] LC 224 Aplicada. Base: ${baseFinal}`);
+        } else {
+            baseFinal = receita * coefPadrao;
+        }
     }
 
     const aliquota = 0.09;
@@ -88,16 +109,36 @@ function calcularCSLLLogic(inputs) {
         baseCalculo: baseFinal,
         aliquota: 0.09,
         csllTotal,
+        majorada: (regime === 'presumido' && !liminarAtiva && (inputs.usarIRPJ ? false : (parseFloat(inputs.receitaManual) || 0) > 1250000)),
         timestamp: new Date().toISOString()
     };
 }
+
 
 function exibirResultadosCSLL(res) {
     const format = (val) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('csll-base-calc').textContent = format(res.baseCalculo);
     document.getElementById('csll-aliquota').textContent = '9%';
     document.getElementById('csll-total').textContent = format(res.csllTotal);
-    document.getElementById('csllResultados').classList.remove('hidden');
+    
+    // Alerta de Majoração
+    const resultsDiv = document.getElementById('csllResultados');
+    let alertBox = document.getElementById('csll-alerta-majoracao');
+    if (res.majorada) {
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'csll-alerta-majoracao';
+            alertBox.className = 'badge badge-warning';
+            alertBox.style.marginTop = '10px';
+            alertBox.style.display = 'block';
+            resultsDiv.insertBefore(alertBox, resultsDiv.firstChild);
+        }
+        alertBox.textContent = '⚠️ Majoração LC 224/2025 aplicada (Excedente R$ 1,25M)';
+    } else if (alertBox) {
+        alertBox.remove();
+    }
+
+    resultsDiv.classList.remove('hidden');
 }
 
 async function loadCSLLData() {
@@ -107,6 +148,7 @@ async function loadCSLLData() {
         document.getElementById('csll-base').value = data.inputs.baseCalculo || 0;
         document.getElementById('csll-regime').value = data.inputs.regime || 'real';
         document.getElementById('csll-coeficiente').value = data.inputs.coeficiente || 32;
+        document.getElementById('csllLiminarLC224').checked = data.inputs.liminar || false;
 
         document.getElementById('csll-usar-irpj').dispatchEvent(new Event('change'));
         document.getElementById('csll-regime').dispatchEvent(new Event('change'));

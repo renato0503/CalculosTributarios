@@ -52,7 +52,8 @@ function getIRPJInputs() {
         adicoes: parseFloat(document.getElementById('irpj-adicoes').value) || 0,
         exclusoes: parseFloat(document.getElementById('irpj-exclusoes').value) || 0,
         compensacoes: parseFloat(document.getElementById('irpj-compensacoes').value) || 0,
-        cnae: parseFloat(document.getElementById('irpj-cnae').value) || 32
+        cnae: parseFloat(document.getElementById('irpj-cnae').value) || 32,
+        liminar: document.getElementById('irpjLiminarLC224').checked
     };
 }
 
@@ -66,26 +67,53 @@ async function handleIRPJCalculation(event) {
 
 function calcularIRPJLogic(inputs) {
     let lucroContabil, baseCalculo;
+    const regime = inputs.regime;
+    const receita = parseFloat(inputs.receita) || 0;
     
-    if (inputs.regime === 'real') {
-        lucroContabil = inputs.receita - inputs.custos - inputs.despesas + inputs.financ;
+    if (regime === 'real') {
+        lucroContabil = receita - inputs.custos - inputs.despesas + inputs.financ;
         baseCalculo = lucroContabil + inputs.adicoes - inputs.exclusoes;
         
-        // Limite de compensação: 30% do lucro real
         const limiteCompensacao = Math.max(0, baseCalculo * 0.30);
         const compensacaoAplicavel = Math.min(inputs.compensacoes, limiteCompensacao);
         baseCalculo = Math.max(0, baseCalculo - compensacaoAplicavel);
     } else {
-        const coeficiente = inputs.cnae / 100;
-        baseCalculo = inputs.receita * coeficiente;
-        lucroContabil = baseCalculo; // Para fins de exibição simplificada
+        // 🔹 LUCRO PRESUMIDO - LÓGICA LC 224/2025
+        const LIMITE_TRIMESTRAL = 1250000.00;
+        const coefPadrao = parseFloat(inputs.cnae) / 100;
+        const liminarAtiva = inputs.liminar === true;
+
+        console.log(`[IRPJ] Calculando Presumido. Receita: ${receita}, Coef: ${coefPadrao}, Liminar: ${liminarAtiva}`);
+
+        if (liminarAtiva) {
+            // Liminar Ativa: Ignora a nova lei e tributa tudo pelo coeficiente original
+            baseCalculo = receita * coefPadrao;
+            console.log(`[IRPJ] Liminar Ativa. Base Linear: ${baseCalculo}`);
+        } else if (receita > LIMITE_TRIMESTRAL) {
+            // LC 224/2025: Fragmentação da Base
+            const parcelaAteLimite = LIMITE_TRIMESTRAL * coefPadrao;
+            const valorExcedente = receita - LIMITE_TRIMESTRAL;
+            const coefMajorado = coefPadrao * 1.10; // Majoração de 10% no coeficiente
+            const parcelaMajorada = valorExcedente * coefMajorado;
+            
+            baseCalculo = parcelaAteLimite + parcelaMajorada;
+            console.log(`[IRPJ] LC 224 Aplicada. Parcela Normal: ${parcelaAteLimite}, Parcela Majorada (${(coefMajorado*100).toFixed(2)}%): ${parcelaMajorada}`);
+        } else {
+            // Dentro do limite
+            baseCalculo = receita * coefPadrao;
+        }
+        
+        lucroContabil = baseCalculo;
     }
     
+    // IRPJ Básico (15%) e Adicional (10%)
     const irpjBasico = baseCalculo * 0.15;
-    const limiteIsencao = 60000; // Trimestral
-    const excedente = Math.max(0, baseCalculo - limiteIsencao);
-    const irpjAdicional = excedente * 0.10;
+    const limiteIsencaoTrimestral = 60000;
+    const baseParaAdicional = Math.max(0, baseCalculo - limiteIsencaoTrimestral);
+    const irpjAdicional = baseParaAdicional * 0.10;
     const irpjTotal = irpjBasico + irpjAdicional;
+
+    console.log(`[IRPJ] Base Final: ${baseCalculo}, IRPJ Total: ${irpjTotal}`);
 
     return {
         lucroContabil,
@@ -93,8 +121,11 @@ function calcularIRPJLogic(inputs) {
         irpjBasico,
         irpjAdicional,
         irpjTotal,
+        majorada: (regime === 'presumido' && !inputs.liminar && receita > 1250000),
         timestamp: new Date().toISOString()
     };
+
+
 }
 
 function exibirResultadosIRPJ(res) {
@@ -106,7 +137,24 @@ function exibirResultadosIRPJ(res) {
     document.getElementById('irpj-adicional').textContent = format(res.irpjAdicional);
     document.getElementById('irpj-total').textContent = format(res.irpjTotal);
     
-    document.getElementById('irpjResultados').classList.remove('hidden');
+    // Alerta de Majoração
+    const resultsDiv = document.getElementById('irpjResultados');
+    let alertBox = document.getElementById('irpj-alerta-majoracao');
+    if (res.majorada) {
+        if (!alertBox) {
+            alertBox = document.createElement('div');
+            alertBox.id = 'irpj-alerta-majoracao';
+            alertBox.className = 'badge badge-warning';
+            alertBox.style.marginTop = '10px';
+            alertBox.style.display = 'block';
+            resultsDiv.insertBefore(alertBox, resultsDiv.firstChild);
+        }
+        alertBox.textContent = '⚠️ Majoração LC 224/2025 aplicada sobre o excedente de R$ 1,25M';
+    } else if (alertBox) {
+        alertBox.remove();
+    }
+    
+    resultsDiv.classList.remove('hidden');
 }
 
 async function loadIRPJData() {
@@ -121,6 +169,7 @@ async function loadIRPJData() {
         document.getElementById('irpj-exclusoes').value = data.inputs.exclusoes || 0;
         document.getElementById('irpj-compensacoes').value = data.inputs.compensacoes || 0;
         document.getElementById('irpj-cnae').value = data.inputs.cnae || 32;
+        document.getElementById('irpjLiminarLC224').checked = data.inputs.liminar || false;
 
         document.getElementById('irpj-regime').dispatchEvent(new Event('change'));
 
